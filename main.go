@@ -15,7 +15,13 @@ type User struct {
 	ImageUrl    string `json:"image_url"`
 }
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
 
+type Response struct {
+	Message string `json:"message"`
+}
 
 func main() {
 	const port = ":8000"
@@ -25,6 +31,7 @@ func main() {
 	A route that gets user details
 	*/
 	mux.HandleFunc("GET /user", getUser)
+	mux.HandleFunc("POST /register", createUser)
 
 	fmt.Printf("Server running on port.... %v\n", port)
 	log.Fatal(http.ListenAndServe(port, mux))
@@ -43,3 +50,27 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(suzan)
 }
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+	var user User
+
+	er := ErrorResponse {
+		Message: "Server error",
+	}
+
+	res := ErrorResponse {
+		Message: "Application successful",
+	}
+	
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		json.NewEncoder(w).Encode(er)
+		return
+	}
+
+	fmt.Println(user)
+
+	json.NewEncoder(w).Encode(res)
+}
+
+
