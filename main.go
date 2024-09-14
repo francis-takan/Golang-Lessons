@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/handlers"
+	"github.com/joho/godotenv"
 )
+
+type Car struct {
+	model string
+	color string
+}
 
 type User struct {
 	FirstName   string `json:"first_name"`
@@ -24,6 +33,25 @@ type Response struct {
 }
 
 func main() {
+
+	subaru := Car{
+		model: "2014",
+		color: "Black",
+	}
+
+	fmt.Println(subaru)
+
+	// load enviroment variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Failed to load enviroment variables")
+	}
+
+	connstr := os.Getenv("PORT")
+	if len(connstr) == 0 {
+		log.Fatal("Failed to load enviroment variables")
+	}
+
 	const port = ":8000"
 	mux := http.NewServeMux()
 
@@ -34,10 +62,18 @@ func main() {
 	mux.HandleFunc("POST /register", createUser)
 
 	fmt.Printf("Server running on port.... %v\n", port)
-	log.Fatal(http.ListenAndServe(port, mux))
+	log.Fatal(http.ListenAndServe(
+		port,
+		handlers.CORS(
+			handlers.AllowedOrigins([]string{"*"}),
+			handlers.AllowedMethods([]string{"GET", "POST"}),
+			handlers.AllowedHeaders([]string{"Content-Type"}),
+		)(mux),
+	))
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
+
 	suzan := User{
 		FirstName:   "Suzan",
 		LastName:    "Kay",
@@ -52,16 +88,17 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
+
 	var user User
 
-	er := ErrorResponse {
+	er := ErrorResponse{
 		Message: "Server error",
 	}
 
-	res := ErrorResponse {
+	res := ErrorResponse{
 		Message: "Application successful",
 	}
-	
+
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		json.NewEncoder(w).Encode(er)
@@ -73,4 +110,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-
+func (c Car) drive() {
+	fmt.Println("Car driving")
+}
